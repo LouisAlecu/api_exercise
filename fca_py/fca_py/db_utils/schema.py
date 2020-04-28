@@ -1,6 +1,9 @@
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy import Column, Integer, String, BigInteger, ForeignKey
+from flask_sqlalchemy import SQLAlchemy
 
+
+db = SQLAlchemy()
 Base = declarative_base()
 
 

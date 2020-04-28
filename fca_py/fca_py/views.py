@@ -1,5 +1,6 @@
 from flask import Blueprint, jsonify, request
 from .db_utils import db_toolbox as dbtb
+from .db_utils.schema import *
 
 data_blueprint = Blueprint("data", __name__)
 
@@ -10,4 +11,5 @@ def helloworld():
     # db_con.create_session()
 
     # db_con.read_query("SELECT * FROM authors")
+    print(db.session.query(Author))
     return jsonify({"hello": "HelloWorld!"})

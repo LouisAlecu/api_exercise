@@ -1,5 +1,4 @@
 from flask import Flask
-from flask_sqlalchemy import SQLAlchemy
 from .config import DevelopmentConfig
 from .views import data_blueprint
 from .db_utils import db_toolbox as dbtb
@@ -15,7 +14,7 @@ def create_app():
     app = Flask(__name__, instance_relative_config=True)
     app.config.from_object(DevelopmentConfig)
     app.register_blueprint(data_blueprint)
+    db.init_app(app)
     print(app.config)
-    db = SQLAlchemy(app)
     print(db)
     return app
