@@ -52,9 +52,9 @@ class DbConnecter:
 
 
 def get_config():
-    # config = {
-    #     "db_path": os.environ["FCA_DB_PATH"],
-    # }
+    config = {
+        "db_path": os.environ["FCA_DB_PATH"],
+    }
     config = {"db_path": "asdf"}
 
     return config
