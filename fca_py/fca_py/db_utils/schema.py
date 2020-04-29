@@ -23,7 +23,7 @@ class ReportingCube(db.Model):
     is_available = db.Column(db.Boolean, default=True)
     is_historical_data = db.Column(db.Boolean, default=False)
     start_date = db.Column(db.String, default=datetime.now().strftime("%Y-%m-%d"))
-    end_date = db.Column(db.String, default=datetime.now().strftime("%Y-%m-%d"))
+    end_date = db.Column(db.String, default="01-01-2050")
 
 
 class Data(db.Model):
@@ -60,6 +60,14 @@ class BookAuthor(db.Model):
     author_id = db.Column(db.Integer, db.ForeignKey("authors.id"))
     title = db.Column(db.String, db.ForeignKey("books.title"))
     author = db.Column(db.String, db.ForeignKey("authors.author"))
+
+
+# class User(db.Model):
+#     __tablename__ = "users"
+#     id = db.Column(db.Integer, primary_key=True)
+#     first_name = db.Column(db.String)
+#     last_name = db.Column(db.String)
+#     is_staff = db.Column(db.Boolean))
 
 
 def initialize_db(db, data_path):

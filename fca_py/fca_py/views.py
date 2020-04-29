@@ -1,15 +1,20 @@
 from flask import Blueprint, jsonify, request
 from .db_utils.schema import *
 from datetime import datetime
+from authenticator import Authenticator
 
 data_blueprint = Blueprint("data", __name__)
+authenticate = Authenticator()
 
 
 @data_blueprint.route("/books", methods=["GET"], endpoint="books")
+@authenticate.login_user
 def books():
     title = request.args.get("title")
     author = request.args.get("authors")
-
+    user_credentials = authenticate.get_user_credentials()
+    if user_credentials["user_type"] == "Not authenticated":
+        return jsonify({"error": "Unauthorized access."})
     if not title or not author:
         return f"You should send an object with title as a string and authors as a list of strings."
 
@@ -33,12 +38,17 @@ def books():
 
 
 @data_blueprint.route("/books/rental_status", methods=["PUT"], endpoint="rental_status")
+@authenticate.login_user
 def rental_status():
     title = request.args.get("title")
     author = request.args.get("authors")
-    if request.args.get("rental_status") == "True":
+    user_credentials = authenticate.get_user_credentials()
+    if user_credentials["user_type"] == "Not authenticated":
+        return jsonify({"error": "Unauthorized access."})
+
+    if request.args.get("rental_status") == "Available":
         is_available = True
-    elif request.args.get("rental_status") == "False":
+    elif request.args.get("rental_status") == "Unavailable":
         is_available = False
     else:
         return jsonify({"Error, wrong input in rental_status key": 123})
@@ -65,16 +75,31 @@ def rental_status():
         .filter(ReportingCube.author == author)
         .filter(ReportingCube.is_historical_data == False)
     )
-
+    historical_record = ReportingCube(
+        book_id=record[0][0],
+        author_id=record[0][1],
+        title=record[0][2],
+        author=record[0][3],
+        language=record[0][4],
+        publication_year=record[0][5],
+        ext_id=record[0][6],
+        isbn=record[0][7],
+        is_available=record[0][8],
+        is_historical_data=True,
+        start_date=record[0][10],
+        end_date=datetime.now().strftime("%Y-%m-%d"),
+    )
     db.session.query(ReportingCube).filter(ReportingCube.title == title).filter(
         ReportingCube.author == author
-    ).update(
+    ).filter(ReportingCube.is_historical_data == False).update(
         {
             ReportingCube.is_available: is_available,
             ReportingCube.start_date: datetime.now().strftime("%Y-%m-%d"),
             ReportingCube.end_date: "01-01-2050",
         }
     )
+    db.session.commit()
+    db.session.add(historical_record)
     db.session.commit()
     return jsonify({"Updated": True})
 
