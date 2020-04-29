@@ -27,7 +27,7 @@ class Book(db.Model):
 class Author(db.Model):
     __tablename__ = "authors"
     id = db.Column(db.Integer, primary_key=True)
-    full_name = db.Column(db.String)
+    author = db.Column(db.String)
 
 
 class BookAuthor(db.Model):
@@ -50,18 +50,27 @@ def initialize_db(db, data_path):
         }
     )
     df_books = df[["id", "title", "language", "publication_year", "isbn"]]
-    df_authors = pd.DataFrame(columns=["author", "id"])
+    df_books[["title", "language", "publication_year", "isbn"]].to_sql(
+        name="books", con=db.engine, if_exists="replace", index=False
+    )
+    df_authors_books = pd.DataFrame(columns=["author", "id"])
     for idx, row in df.iterrows():
         authors = [re.sub(" +", " ", name).strip() for name in row.authors.split(",")]
         book_ids = [row.id] * len(authors)
         df_authors_staging = pd.DataFrame(
             list(zip(authors, book_ids)), columns=["author", "id"]
         )
-        df_authors = df_authors.append(df_authors_staging, ignore_index=True)
+        df_authors_books = df_authors_books.append(
+            df_authors_staging, ignore_index=True
+        )
+    authors = list(set(df_authors_books["author"].values))
+    authors_objects = [Author(author=author) for author in authors]
+    db.session.query(Author).delete()
+    db.session.bulk_save_objects(authors_objects)
+    db.session.commit()
 
-    print(df_authors)
-    print("asdf")
-    print(df_authors.loc[df_authors["id"] == 157993])
-    print(df_authors["author"].to_dict())
-    records = df_authors.to_dict(orient="records")
-    db.session.bulk_insert_mappings(Author, records)
+    # records = df_authors.to_dict(orient="records")
+    # db.session.bulk_insert_mappings(Author, records)
+    # df_authors.to_sql(
+    #     name="authors", con=db.engine, if_exists="append", index=False,
+    # )
