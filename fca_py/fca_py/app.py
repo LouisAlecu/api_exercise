@@ -6,15 +6,10 @@ from .db_utils.schema import *
 
 
 def create_app():
-    db_path = {"db_path": "./sqlite_db"}
-    # db_con = dbtb.connect_to_database()
-    # db_con.create_session()
-    # create_database(db_con.get_db_engine())
-
     app = Flask(__name__, instance_relative_config=True)
     app.config.from_object(DevelopmentConfig)
     app.register_blueprint(data_blueprint)
     db.init_app(app)
-    print(app.config)
-    print(db)
+    with app.app_context():
+        initialize_db(db.engine, app.config["DB_INIT_DATA_PATH"])
     return app

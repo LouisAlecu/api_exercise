@@ -1,19 +1,20 @@
-from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy import Column, Integer, String, BigInteger, ForeignKey
+# from sqlalchemy.ext.declarative import declarative_base
+# from sqlalchemy import db.Column, Integer, String, BigInteger, ForeignKey
 from flask_sqlalchemy import SQLAlchemy
-
+import pandas as pd
+import re
 
 db = SQLAlchemy()
-Base = declarative_base()
+# Base = declarative_base()
 
 
-class Book(Base):
+class Book(db.Model):
     __tablename__ = "books"
-    id = Column(Integer, primary_key=True)
-    title = Column(String)
-    language = Column(String)
-    publication_year = Column(String)
-    isbn = Column(BigInteger)
+    id = db.Column(db.Integer, primary_key=True)
+    title = db.Column(db.String)
+    language = db.Column(db.String)
+    publication_year = db.Column(db.String)
+    isbn = db.Column(db.BigInteger)
 
     def __repr__(self):
         return "<User(name='%s', fullname='%s', nickname='%s')>" % (
@@ -23,18 +24,41 @@ class Book(Base):
         )
 
 
-class Author(Base):
+class Author(db.Model):
     __tablename__ = "authors"
-    id = Column(Integer, primary_key=True)
-    full_name = Column(String)
+    id = db.Column(db.Integer, primary_key=True)
+    full_name = db.Column(db.String)
 
 
-class BookAuthor(Base):
+class BookAuthor(db.Model):
     __tablename__ = "book_authors"
-    id = Column(Integer, primary_key=True)
-    book_id = Column(Integer, ForeignKey("books.id"))
-    author_id = Column(Integer, ForeignKey("authors.id"))
+    id = db.Column(db.Integer, primary_key=True)
+    book_id = db.Column(db.Integer, db.ForeignKey("books.id"))
+    author_id = db.Column(db.Integer, db.ForeignKey("authors.id"))
 
 
-def create_database(engine):
-    Base.metadata.create_all(engine)
+def initialize_db(engine, data_path):
+    df = pd.read_csv(data_path)
+    df = df.rename(
+        columns={
+            "ISBN": "isbn",
+            "Title": "title",
+            "Publication Year": "publication_year",
+            "Language": "language",
+            "Authors": "authors",
+            "Id": "id",
+        }
+    )
+    df_books = df[["id", "title", "language", "publication_year", "isbn"]]
+    df_authors = pd.DataFrame(columns=["author", "id"])
+    for idx, row in df.iterrows():
+        authors = [re.sub(" +", " ", name).strip() for name in row.authors.split(",")]
+        book_ids = [row.id] * len(authors)
+        df_authors_staging = pd.DataFrame(
+            list(zip(authors, book_ids)), columns=["author", "id"]
+        )
+        df_authors = df_authors.append(df_authors_staging, ignore_index=True)
+
+    print(df_authors)
+    print("asdf")
+    print(df_authors.loc[df_authors["id"] == 157993])
