@@ -37,7 +37,7 @@ class BookAuthor(db.Model):
     author_id = db.Column(db.Integer, db.ForeignKey("authors.id"))
 
 
-def initialize_db(engine, data_path):
+def initialize_db(db, data_path):
     df = pd.read_csv(data_path)
     df = df.rename(
         columns={
@@ -62,3 +62,6 @@ def initialize_db(engine, data_path):
     print(df_authors)
     print("asdf")
     print(df_authors.loc[df_authors["id"] == 157993])
+    print(df_authors["author"].to_dict())
+    records = df_authors.to_dict(orient="records")
+    db.session.bulk_insert_mappings(Author, records)

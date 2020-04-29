@@ -8,6 +8,6 @@ data_blueprint = Blueprint("data", __name__)
 
 @data_blueprint.route("/helloworld", methods=["GET"], endpoint="delete_portfolio")
 def helloworld():
+    print(db.session.query(Author))
     print(db.engine)
-
     return jsonify({"hello": "HelloWorld!"})

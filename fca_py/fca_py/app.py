@@ -11,5 +11,5 @@ def create_app():
     app.register_blueprint(data_blueprint)
     db.init_app(app)
     with app.app_context():
-        initialize_db(db.engine, app.config["DB_INIT_DATA_PATH"])
+        initialize_db(db, app.config["DB_INIT_DATA_PATH"])
     return app
