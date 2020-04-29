@@ -3,9 +3,27 @@
 from flask_sqlalchemy import SQLAlchemy
 import pandas as pd
 import re
+from datetime import datetime
 
 db = SQLAlchemy()
 # Base = declarative_base()
+
+
+class ReportingCube(db.Model):
+    __tablename__ = "reporting_cube"
+    id = db.Column(db.Integer, primary_key=True)
+    book_id = db.Column(db.Integer, db.ForeignKey("books.id"))
+    author_id = db.Column(db.Integer, db.ForeignKey("authors.id"))
+    title = db.Column(db.String, db.ForeignKey("books.title"))
+    author = db.Column(db.String, db.ForeignKey("authors.author"))
+    language = db.Column(db.String)
+    publication_year = db.Column(db.String)
+    isbn = db.Column(db.BigInteger)
+    ext_id = db.Column(db.BigInteger)
+    is_available = db.Column(db.Boolean, default=True)
+    is_historical_data = db.Column(db.Boolean, default=False)
+    start_date = db.Column(db.String, default=datetime.now().strftime("%Y-%m-%d"))
+    end_date = db.Column(db.String, default=datetime.now().strftime("%Y-%m-%d"))
 
 
 class Data(db.Model):
@@ -28,13 +46,6 @@ class Book(db.Model):
     isbn = db.Column(db.BigInteger)
     ext_id = db.Column(db.BigInteger)
 
-    # def __repr__(self):
-    #     return "<User(name='%s', fullname='%s', nickname='%s')>" % (
-    #         self.name,
-    #         self.fullname,
-    #         self.nickname,
-    #     )
-
 
 class Author(db.Model):
     __tablename__ = "authors"
@@ -47,10 +58,8 @@ class BookAuthor(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     book_id = db.Column(db.Integer, db.ForeignKey("books.id"))
     author_id = db.Column(db.Integer, db.ForeignKey("authors.id"))
-    # __table_args__ = (
-    #     db.PrimaryKeyConstraint("book_id", "author_id"),
-    #     {},
-    # )
+    title = db.Column(db.String, db.ForeignKey("books.title"))
+    author = db.Column(db.String, db.ForeignKey("authors.author"))
 
 
 def initialize_db(db, data_path):
@@ -94,19 +103,55 @@ def initialize_db(db, data_path):
     db.session.bulk_save_objects(authors_objects)
     db.session.commit()
     book_author_records = (
-        db.session.query(Author, Book, Data)
+        db.session.query(Author.id, Book.id, Author.author, Book.title, Data)
         .filter(Data.author == Author.author)
         .filter(Data.isbn == Book.isbn)
         .all()
     )
     book_author_records = [
         {
-            "author_id": book_author_records[idx][0].id,
-            "book_id": book_author_records[idx][1].id,
+            "author_id": book_author_records[idx][0],
+            "book_id": book_author_records[idx][1],
+            "author": book_author_records[idx][2],
+            "title": book_author_records[idx][3],
             "id": idx,
         }
         for idx in range(len(book_author_records))
     ]
     db.session.query(BookAuthor).delete()
     db.session.bulk_insert_mappings(BookAuthor, book_author_records)
+    db.session.commit()
+
+    reporting_cube_records = (
+        db.session.query(
+            Book.id,
+            Author.id,
+            Book.title,
+            Author.author,
+            Book.language,
+            Book.publication_year,
+            Book.isbn,
+            Book.ext_id,
+            Data,
+        )
+        .filter(Data.author == Author.author)
+        .filter(Data.isbn == Book.isbn)
+        .all()
+    )
+    reporting_cube_records = [
+        {
+            "book_id": reporting_cube_records[idx][0],
+            "author_id": reporting_cube_records[idx][1],
+            "title": reporting_cube_records[idx][2],
+            "author": reporting_cube_records[idx][3],
+            "language": reporting_cube_records[idx][4],
+            "publication_year": reporting_cube_records[idx][5],
+            "isbn": reporting_cube_records[idx][6],
+            "ext_id": reporting_cube_records[idx][7],
+            "id": idx,
+        }
+        for idx in range(len(reporting_cube_records))
+    ]
+    db.session.query(ReportingCube).delete()
+    db.session.bulk_insert_mappings(ReportingCube, reporting_cube_records)
     db.session.commit()
