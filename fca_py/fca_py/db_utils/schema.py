@@ -99,20 +99,14 @@ def initialize_db(db, data_path):
         .filter(Data.isbn == Book.isbn)
         .all()
     )
-
+    book_author_records = [
+        {
+            "author_id": book_author_records[idx][0].id,
+            "book_id": book_author_records[idx][1].id,
+            "id": idx,
+        }
+        for idx in range(len(book_author_records))
+    ]
     db.session.query(BookAuthor).delete()
-    db.session.bulk_save_objects(book_author_records)
+    db.session.bulk_insert_mappings(BookAuthor, book_author_records)
     db.session.commit()
-    print("book author records: ", book_author_records)
-    print(type(book_author_records[0][0]))
-    f"""
-        insert into book_authors
-        select
-            bk.id
-            ,at.id
-        from data dt
-        inner join authors at
-            on dt.author = at.author
-        inner join books bk
-            on dt.isbn = bk.isbn
-    """
