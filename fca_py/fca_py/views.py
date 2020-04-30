@@ -12,18 +12,22 @@ authenticate = Authenticator()
 @data_blueprint.route("/books", methods=["GET"], endpoint="books")
 @authenticate.login_user
 def books():
+    """
+    Receive a get request with author and/or title and user_id.
+    If just author or just title, it gets all the records for those.
+    If both author and title, it tries to find the book written by that author.
+    Only users authorized.
+    """
     json_data = request.get_json()
     author = json_data.get("author")
     title = json_data.get("title")
     user_credentials = authenticate.get_user_credentials()
     if user_credentials["user_type"] != "user":
-        return jsonify(
-            {"error": "Unauthorized access. This endpoint is just for users."}
-        )
+        return jsonify({401: "Unauthorized access. This endpoint is just for users."})
     if not title and not author:
         return jsonify(
             {
-                "error": f"""
+                400: f"""
                         You should send an object with either a title,
                         an author, or both. If both it will be interpreted 
                         that the title is meant to be written by that author.
@@ -75,21 +79,36 @@ def books():
 @data_blueprint.route("/books/rental_status", methods=["PUT"], endpoint="rental_status")
 @authenticate.login_user
 def rental_status():
+    """
+    Receives a put request with book_id, rental_status and user_id. 
+    Updates the database in the following way:
+        Updates the current record with the new rental status and inserts
+        some historical_records that are computed in memory based on what 
+        it queries from the reporting_cube table. Keeping track of historical
+        and current records is done via columns start_date, end_date and 
+        is_historical_data.
+    If the record is updated to rental status "Available", it notifies the users who
+    had that book on their wishlist.
+    """
     json_data = request.get_json()
     book_id = json_data.get("book_id")
     rental_status = json_data.get("rental_status")
     user_credentials = authenticate.get_user_credentials()
     if user_credentials["user_type"] != "staff":
-        return jsonify({"error": "Unauthorized access."})
+        return jsonify({401: "Unauthorized access."})
 
     if rental_status == "Available":
         is_available = True
     elif rental_status == "Unavailable":
         is_available = False
     else:
-        return jsonify({"Bad Request": "wrong input in rental_status key"})
+        return jsonify({400: "wrong input in rental_status key"})
     if not book_id:
-        return f"You should send an object with the book_id and rental_status desired <Available|Unavailable>."
+        return jsonify(
+            {
+                400: f"You should send an object with the book_id and rental_status desired <Available|Unavailable>."
+            }
+        )
 
     book_records = (
         db.session.query(
@@ -139,12 +158,28 @@ def rental_status():
     db.session.commit()
     db.session.bulk_save_objects(historical_records)
     db.session.commit()
+    # Notifications for users
+    if rental_status == "Available":
+        wishlist_books_records = (
+            db.session.query(
+                UserWishlist.user_id, UserWishlist.title, UserWishlist.isbn
+            )
+            .filter(UserWishlist.book_id == book_id)
+            .all()
+        )
+        for record in wishlist_books_records:
+            print(
+                f"User {record[0]} is notified that the book with title {record[1]} and isbn {record[2]} is now available and can be removed from their wishlist."
+            )
     return jsonify({"Updated": True})
 
 
-@data_blueprint.route("/wishlists", methods=["GET"], endpoint="wishlists")
+@data_blueprint.route("/wishlists", methods=["POST"], endpoint="wishlists")
 @authenticate.login_user
 def wishlists():
+    """
+    Receives a post request. Adds or removes books from users' wishlists.
+    """
     json_data = request.get_json()
     title = json_data.get("title")
     isbn = json_data.get("isbn")
@@ -156,12 +191,17 @@ def wishlists():
         )
 
     if not title and not isbn:
-        return f"You should send an object with action <Add|Remove>, title as a string and isbn as an int."
+        return jsonify(
+            {
+                400: f"You should send an object with action <Add|Remove>, title as a string and isbn as an int."
+            }
+        )
 
     if action == "Remove":
         db.session.query(UserWishlist).filter(
             UserWishlist.user_id == user_credentials["user_id"]
         ).filter(UserWishlist.title == title).filter(UserWishlist.isbn == isbn).delete()
+        db.session.commit()
         return jsonify({"Removed": True})
     elif action == "Add":
         book = (
@@ -197,18 +237,20 @@ def wishlists():
             db.session.commit()
         else:
             return jsonify(
-                {
-                    "Resource not found": "Book not found in the library or is already available."
-                }
+                {404: "Book not found in the library or is already available."}
             )
-        return jsonify({"Book added to wishlist": True})
+        return jsonify({"message": "Book added to wishlist"})
     else:
-        return jsonify({"Bad Request": "Action must be either Add or Remove."})
+        return jsonify({400: "Action must be either Add or Remove."})
 
 
 @data_blueprint.route("/report", methods=["GET"], endpoint="report")
 @authenticate.login_user
 def report():
+    """
+    Receives a get request and generates a report at a location found in the
+    environment variables in the config.py
+    """
     user_credentials = authenticate.get_user_credentials()
     if user_credentials["user_type"] != "staff":
         return jsonify(
@@ -248,10 +290,14 @@ def report():
 @data_blueprint.route("/amazon_ids", methods=["PUT"], endpoint="amazon_ids")
 @authenticate.login_user
 def amazon_ids():
+    """
+    Queries the openlibrary api based on the isbns of the books in the db.
+    If it finds an amazon_id, it updates the books table.
+    """
     json_data = request.get_json()
     user_credentials = authenticate.get_user_credentials()
     if user_credentials["user_type"] != "staff":
-        return jsonify({"error": "Unauthorized access."})
+        return jsonify({401: "Unauthorized access."})
 
     book_isbn_records = db.session.query(Book.id, Book.isbn,).all()
     print(len(book_isbn_records))

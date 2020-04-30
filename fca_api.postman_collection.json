@@ -1,0 +1,443 @@
+{
+	"info": {
+		"_postman_id": "a0a0ee21-5dd9-4224-9c82-446f0f41ff82",
+		"name": "fca_api",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "GET_books_ex1",
+			"protocolProfileBehavior": {
+				"disableBodyPruning": true
+			},
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "user_id",
+						"value": "1",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"title\": \"Harry Potter and the Philosopher's Stone\"\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "127.0.0.1:5000/books",
+					"host": [
+						"127",
+						"0",
+						"0",
+						"1"
+					],
+					"port": "5000",
+					"path": [
+						"books"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "GET_books_ex2",
+			"protocolProfileBehavior": {
+				"disableBodyPruning": true
+			},
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "user_id",
+						"value": "4",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"title\": \"My Sister's Keeper\"\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "127.0.0.1:5000/books",
+					"host": [
+						"127",
+						"0",
+						"0",
+						"1"
+					],
+					"port": "5000",
+					"path": [
+						"books"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "GET_books_ex3",
+			"protocolProfileBehavior": {
+				"disableBodyPruning": true
+			},
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "user_id",
+						"value": "2",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"title\": \"My Sister's Keeper\"\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "127.0.0.1:5000/books",
+					"host": [
+						"127",
+						"0",
+						"0",
+						"1"
+					],
+					"port": "5000",
+					"path": [
+						"books"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "PUT_books_rental_status_ex1",
+			"request": {
+				"method": "PUT",
+				"header": [
+					{
+						"key": "user_id",
+						"value": "4",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n\t\"book_id\": 2,\n\t\"rental_status\": \"Unavailable\"\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "127.0.0.1:5000/books/rental_status",
+					"host": [
+						"127",
+						"0",
+						"0",
+						"1"
+					],
+					"port": "5000",
+					"path": [
+						"books",
+						"rental_status"
+					],
+					"query": [
+						{
+							"key": "",
+							"value": "staff",
+							"disabled": true
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "PUT_books_rental_status_ex2",
+			"request": {
+				"method": "PUT",
+				"header": [
+					{
+						"key": "user_id",
+						"value": "5",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n\t\"book_id\": 52,\n\t\"rental_status\": \"Unavailable\"\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "127.0.0.1:5000/books/rental_status",
+					"host": [
+						"127",
+						"0",
+						"0",
+						"1"
+					],
+					"port": "5000",
+					"path": [
+						"books",
+						"rental_status"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "POST_wishlists_ex1",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "user_id",
+						"value": "3",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n\t\"title\": \"Harry Potter and the Philosopher's Stone\",\n\t\"isbn\": 439554934,\n\t\"action\": \"Add\"\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "127.0.0.1:5000/wishlists",
+					"host": [
+						"127",
+						"0",
+						"0",
+						"1"
+					],
+					"port": "5000",
+					"path": [
+						"wishlists"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "POST_wishlists_ex2",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "user_id",
+						"value": "3",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n\t\"title\": \"Twilight\",\n\t\"isbn\": 316015849,\n\t\"action\": \"Add\"\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "127.0.0.1:5000/wishlists",
+					"host": [
+						"127",
+						"0",
+						"0",
+						"1"
+					],
+					"port": "5000",
+					"path": [
+						"wishlists"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "POST_wishlist_ex3",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "user_id",
+						"value": "3",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "\n{\n\t\"title\": \"Eclipse\",\n\t\"isbn\": 316160202,\n\t\"action\": \"Add\"\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "127.0.0.1:5000/wishlists",
+					"host": [
+						"127",
+						"0",
+						"0",
+						"1"
+					],
+					"port": "5000",
+					"path": [
+						"wishlists"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "PUT_books_rental_status_ex3",
+			"request": {
+				"method": "PUT",
+				"header": [
+					{
+						"key": "user_id",
+						"value": "4",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n\t\"book_id\": 2,\n\t\"rental_status\": \"Available\"\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "127.0.0.1:5000/books/rental_status",
+					"host": [
+						"127",
+						"0",
+						"0",
+						"1"
+					],
+					"port": "5000",
+					"path": [
+						"books",
+						"rental_status"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "POST_wishlist_ex4",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "user_id",
+						"value": "3",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "\n{\n\t\"title\": \"Eclipse\",\n\t\"isbn\": 316160202,\n\t\"action\": \"Remove\"\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "127.0.0.1:5000/wishlists",
+					"host": [
+						"127",
+						"0",
+						"0",
+						"1"
+					],
+					"port": "5000",
+					"path": [
+						"wishlists"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "GET_report",
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "user_id",
+						"value": "4",
+						"type": "text"
+					}
+				],
+				"url": {
+					"raw": "127.0.0.1:5000/report",
+					"host": [
+						"127",
+						"0",
+						"0",
+						"1"
+					],
+					"port": "5000",
+					"path": [
+						"report"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "PUT_amazon_ids",
+			"request": {
+				"method": "PUT",
+				"header": [
+					{
+						"key": "user_id",
+						"value": "4",
+						"type": "text"
+					}
+				],
+				"url": {
+					"raw": "127.0.0.1:5000/amazon_ids",
+					"host": [
+						"127",
+						"0",
+						"0",
+						"1"
+					],
+					"port": "5000",
+					"path": [
+						"amazon_ids"
+					]
+				}
+			},
+			"response": []
+		}
+	],
+	"protocolProfileBehavior": {}
+}

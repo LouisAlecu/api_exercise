@@ -81,6 +81,11 @@ class UserWishlist(db.Model):
 
 
 def initialize_db(db, data_path):
+    """
+    Reads in the data from the csv and initializes the schema with the data from there.
+    Also at the end we add some dummy users so we can use the authentification functionality
+    from the authenticator.py
+    """
     df = pd.read_csv(data_path)
     df = df.rename(
         columns={
