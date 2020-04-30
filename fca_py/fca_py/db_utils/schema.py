@@ -78,6 +78,7 @@ class UserWishlist(db.Model):
     first_name = db.Column(db.String)
     last_name = db.Column(db.String)
     book_id = db.Column(db.Integer, db.ForeignKey("reporting_cube.book_id"))
+    isbn = db.Column(db.Integer, db.ForeignKey("reporting_cube.isbn"))
     title = db.Column(db.String, db.ForeignKey("reporting_cube.title"))
     # is_available = db.Column(db.Boolean, db.ForeignKey("reporting_cube.is_available"))
     # is_historical_data = db.Column(

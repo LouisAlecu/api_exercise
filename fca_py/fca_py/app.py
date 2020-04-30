@@ -1,8 +1,8 @@
 from flask import Flask
-from .config import DevelopmentConfig
-from .views import data_blueprint
-from .db_utils import db_toolbox as dbtb
-from .db_utils.schema import *
+from config import DevelopmentConfig
+from views import data_blueprint
+from db_utils import db_toolbox as dbtb
+from db_utils.schema import *
 
 
 def create_app():
