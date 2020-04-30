@@ -234,10 +234,16 @@ def report():
         """,
         db.engine,
     )
-    report_data["days_rented"] = (
-        datetime.now()
-        - datetime.strptime(report_data["start_date"].values[0], "%Y-%m-%d")
-    ).days
+    if len(report_data) > 0:
+        report_data["days_rented"] = (
+            datetime.now()
+            - datetime.strptime(report_data["start_date"].values[0], "%Y-%m-%d")
+        ).days
+        response = jsonify({"Report generated.": True})
+    else:
+        response = jsonify(
+            {"Report generated. However, all books are available.": True}
+        )
     report_data.to_json(current_app.config["REPORTS_DIR_PATH"])
     print(current_app.config["REPORTS_DIR_PATH"])
-    return jsonify({"Report generated.": True})
+    return response
