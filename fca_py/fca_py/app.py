@@ -10,7 +10,7 @@ def create_app():
     app.config.from_object(DevelopmentConfig)
     app.register_blueprint(data_blueprint)
     db.init_app(app)
-    print("ASDF")
+    print("Restarted app.")
     with app.app_context():
         db.create_all()
         initialize_db(db, app.config["DB_INIT_DATA_PATH"])

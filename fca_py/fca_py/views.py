@@ -1,7 +1,8 @@
-from flask import Blueprint, jsonify, request
+from flask import Blueprint, jsonify, request, current_app
 from db_utils.schema import *
 from datetime import datetime
 from authenticator import Authenticator
+import pandas as pd
 
 data_blueprint = Blueprint("data", __name__)
 authenticate = Authenticator()
@@ -15,8 +16,10 @@ def books():
     title = json_data.get("title")
     user_credentials = authenticate.get_user_credentials()
     print(user_credentials)
-    if user_credentials["user_type"] not in ("user", "staff"):
-        return jsonify({"error": "Unauthorized access."})
+    if user_credentials["user_type"] != "user":
+        return jsonify(
+            {"error": "Unauthorized access. This endpoint is just for users."}
+        )
     if not title and not author:
         return jsonify(
             {
@@ -146,31 +149,95 @@ def wishlists():
     json_data = request.get_json()
     title = json_data.get("title")
     isbn = json_data.get("isbn")
+    action = json_data.get("action")
     user_credentials = authenticate.get_user_credentials()
     if user_credentials["user_type"] != "user":
-        return jsonify({401: "Unauthorized access."})
+        return jsonify(
+            {401: "Unauthorized access. This is an endpoint just for users."}
+        )
 
     if not title and not isbn:
-        return f"You should send an object with title as a string and isbn as an int."
+        return f"You should send an object with action <Add|Remove>, title as a string and isbn as an int."
 
-    book = (
-        db.session.query(
-            ReportingCube.book_id,
-            ReportingCube.title,
-            ReportingCube.isbn,
-            ReportingCube.is_available,
+    if action == "Remove":
+        db.session.query(UserWishlist).filter(
+            UserWishlist.user_id == user_credentials["user_id"]
+        ).filter(UserWishlist.title == title).filter(UserWishlist.isbn == isbn).delete()
+        return jsonify({"Removed": True})
+    elif action == "Add":
+        print("Adding stuff: ")
+        book = (
+            db.session.query(
+                ReportingCube.book_id,
+                ReportingCube.title,
+                ReportingCube.isbn,
+                ReportingCube.is_available,
+            )
+            .filter(ReportingCube.title == title)
+            .filter(ReportingCube.isbn == isbn)
+            .filter(ReportingCube.is_historical_data == False)
+            .filter(ReportingCube.is_available == False)
+            .group_by(
+                ReportingCube.book_id,
+                ReportingCube.title,
+                ReportingCube.isbn,
+                ReportingCube.is_available,
+            )
+            .all()
         )
-        .filter(ReportingCube.title == title)
-        .filter(ReportingCube.isbn == isbn)
-        .filter(ReportingCube.is_historical_data == False)
-        .filter(ReportingCube.is_available == True)
-        .group_by(
-            ReportingCube.book_id,
-            ReportingCube.title,
-            ReportingCube.isbn,
-            ReportingCube.is_available,
+        print("Book is: ", book)
+        if len(book) == 1 and len(book[0]) == 4:
+            db.session.add(
+                UserWishlist(
+                    user_id=user_credentials["user_id"],
+                    first_name=user_credentials["first_name"],
+                    last_name=user_credentials["last_name"],
+                    book_id=book[0][0],
+                    title=book[0][1],
+                    isbn=book[0][2],
+                )
+            )
+            db.session.commit()
+        else:
+            return jsonify(
+                {
+                    "Resource not found": "Book not found in the library or is already available."
+                }
+            )
+        print(book)
+        return jsonify({"Book added to wishlist": True})
+    else:
+        return jsonify({"Bad Request": "Action must be either Add or Remove."})
+
+
+@data_blueprint.route("/report", methods=["GET"], endpoint="report")
+@authenticate.login_user
+def report():
+    user_credentials = authenticate.get_user_credentials()
+    if user_credentials["user_type"] != "staff":
+        return jsonify(
+            {401: "Unauthorized access. This is an endpoint just for users."}
         )
-        .all()
+
+    report_data = pd.read_sql(
+        f""" 
+        select
+            book_id
+            ,title
+            ,isbn
+            ,start_date
+            ,is_available
+        from reporting_cube
+        where is_historical_data = 0
+            and is_available = 0
+        group by 1,2,3,4
+        """,
+        db.engine,
     )
-    print(book)
-    return jsonify({"hello": book})
+    report_data["days_rented"] = (
+        datetime.now()
+        - datetime.strptime(report_data["start_date"].values[0], "%Y-%m-%d")
+    ).days
+    report_data.to_json(current_app.config["REPORTS_DIR_PATH"])
+    print(current_app.config["REPORTS_DIR_PATH"])
+    return jsonify({"Report generated.": True})

@@ -10,6 +10,7 @@ class FlaskConfigTemplate(object):
         "sqlite:////home/louis/repos/testing/fca/fca_py/fca_py/sqlite_db"
     )
     DB_INIT_DATA_PATH = "/home/louis/repos/testing/fca/input_data/data.csv"
+    REPORTS_DIR_PATH = "/home/louis/repos/testing/fca/output_data/report_generated.json"
     SQLALCHEMY_TRACK_MODIFICATIONS = False
 
 
@@ -21,4 +22,5 @@ class DevelopmentConfig(FlaskConfigTemplate):
         "sqlite:////home/louis/repos/testing/fca/fca_py/fca_py/sqlite_db"
     )
     DB_INIT_DATA_PATH = "/home/louis/repos/testing/fca/input_data/data.csv"
+    REPORTS_DIR_PATH = "/home/louis/repos/testing/fca/output_data/report_generated.json"
     SQLALCHEMY_TRACK_MODIFICATIONS = False
