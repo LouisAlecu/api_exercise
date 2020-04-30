@@ -1,0 +1,17 @@
+version: '3'
+services:
+  fca-py:
+    build:
+      dockerfile: Dockerfile_fca_py
+      context: ./fca_py
+    image: fca_py
+    container_name: fca_py_c1
+    volumes:
+      - ./input_data:/input_data
+      - ./output_data:/output_data
+    working_dir: /fca_py/fca_py
+    ports:
+      - '5000:5000'
+    expose: [5432]
+    command: >
+      flask run --host=0.0.0.0

@@ -1,12 +1,9 @@
-# from sqlalchemy.ext.declarative import declarative_base
-# from sqlalchemy import db.Column, Integer, String, BigInteger, ForeignKey
 from flask_sqlalchemy import SQLAlchemy
 import pandas as pd
 import re
 from datetime import datetime
 
 db = SQLAlchemy()
-# Base = declarative_base()
 
 
 class ReportingCube(db.Model):
@@ -45,6 +42,7 @@ class Book(db.Model):
     publication_year = db.Column(db.String)
     isbn = db.Column(db.BigInteger)
     ext_id = db.Column(db.BigInteger)
+    amazon_id = db.Column(db.String)
 
 
 class Author(db.Model):
@@ -80,25 +78,6 @@ class UserWishlist(db.Model):
     book_id = db.Column(db.Integer, db.ForeignKey("reporting_cube.book_id"))
     isbn = db.Column(db.Integer, db.ForeignKey("reporting_cube.isbn"))
     title = db.Column(db.String, db.ForeignKey("reporting_cube.title"))
-    # is_available = db.Column(db.Boolean, db.ForeignKey("reporting_cube.is_available"))
-    # is_historical_data = db.Column(
-    #     db.Boolean, db.ForeignKey("reporting_cube.is_historical_data")
-    # )
-    # we need the constraint below because in the reporting cube we got the is_available
-    # field and because we have the historical data in there, so we want the most
-    # updated record from the cube
-    # __table_args__ = (
-    #     db.ForeignKeyConstraint(
-    #         [book_id, title, is_available, is_historical_data],
-    #         [
-    #             ReportingCube.id,
-    #             ReportingCube.title,
-    #             ReportingCube.is_available,
-    #             ReportingCube.is_historical_data,
-    #         ],
-    #     ),
-    #     {},
-    # )
 
 
 def initialize_db(db, data_path):
@@ -118,7 +97,6 @@ def initialize_db(db, data_path):
     db.session.query(Book).delete()
     db.session.bulk_insert_mappings(Book, books_records)
     db.session.commit()
-    # asdf =
     df_authors_books = pd.DataFrame(columns=["author", "ext_id"])
     for idx, row in df.iterrows():
         authors = [re.sub(" +", " ", name).strip() for name in row.authors.split(",")]

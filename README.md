@@ -1,1 +1,5 @@
-This is an api exercise
+To deploy use: 
+	docker-compuse build
+	docker-compose up
+
+Requests:

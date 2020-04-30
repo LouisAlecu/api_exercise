@@ -1,6 +1,6 @@
 from flask import request
 import json
-from db_utils.schema import *
+from .db_utils.schema import *
 
 
 class Authenticator:

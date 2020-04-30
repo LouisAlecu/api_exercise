@@ -1,8 +1,9 @@
 from flask import Blueprint, jsonify, request, current_app
-from db_utils.schema import *
+from .db_utils.schema import *
 from datetime import datetime
-from authenticator import Authenticator
+from .authenticator import Authenticator
 import pandas as pd
+from .openlibrary_api_handler import ApiClient
 
 data_blueprint = Blueprint("data", __name__)
 authenticate = Authenticator()
@@ -15,7 +16,6 @@ def books():
     author = json_data.get("author")
     title = json_data.get("title")
     user_credentials = authenticate.get_user_credentials()
-    print(user_credentials)
     if user_credentials["user_type"] != "user":
         return jsonify(
             {"error": "Unauthorized access. This endpoint is just for users."}
@@ -79,7 +79,6 @@ def rental_status():
     book_id = json_data.get("book_id")
     rental_status = json_data.get("rental_status")
     user_credentials = authenticate.get_user_credentials()
-    print(user_credentials)
     if user_credentials["user_type"] != "staff":
         return jsonify({"error": "Unauthorized access."})
 
@@ -165,7 +164,6 @@ def wishlists():
         ).filter(UserWishlist.title == title).filter(UserWishlist.isbn == isbn).delete()
         return jsonify({"Removed": True})
     elif action == "Add":
-        print("Adding stuff: ")
         book = (
             db.session.query(
                 ReportingCube.book_id,
@@ -185,7 +183,6 @@ def wishlists():
             )
             .all()
         )
-        print("Book is: ", book)
         if len(book) == 1 and len(book[0]) == 4:
             db.session.add(
                 UserWishlist(
@@ -204,7 +201,6 @@ def wishlists():
                     "Resource not found": "Book not found in the library or is already available."
                 }
             )
-        print(book)
         return jsonify({"Book added to wishlist": True})
     else:
         return jsonify({"Bad Request": "Action must be either Add or Remove."})
@@ -245,5 +241,38 @@ def report():
             {"Report generated. However, all books are available.": True}
         )
     report_data.to_json(current_app.config["REPORTS_DIR_PATH"])
-    print(current_app.config["REPORTS_DIR_PATH"])
+    print("Path of the report is: ", current_app.config["REPORTS_DIR_PATH"])
     return response
+
+
+@data_blueprint.route("/amazon_ids", methods=["PUT"], endpoint="amazon_ids")
+@authenticate.login_user
+def amazon_ids():
+    json_data = request.get_json()
+    user_credentials = authenticate.get_user_credentials()
+    if user_credentials["user_type"] != "staff":
+        return jsonify({"error": "Unauthorized access."})
+
+    book_isbn_records = db.session.query(Book.id, Book.isbn,).all()
+    print(len(book_isbn_records))
+    api = ApiClient()
+    for record in book_isbn_records:
+        amazon_id = None
+        book_id = record[0]
+        book_isbn = record[1]
+        api_response = api.get_response(book_isbn)
+        print(api_response.json())
+        print(len(dict.keys(api_response.json())))
+        if len(dict.keys(api_response.json())) > 0:
+            amazon_id = api_response.json()[f"ISBN:{book_isbn}"]["identifiers"].get(
+                "amazon"
+            )
+            if isinstance(amazon_id, list) and len(amazon_id) == 1:
+                amazon_id = amazon_id[0]
+        if amazon_id:
+            print("Updating db.")
+            db.session.query(Book).filter(Book.id == book_id).update(
+                {Book.amazon_id: amazon_id,}
+            )
+            db.session.commit()
+    return jsonify({"Updated": True})
