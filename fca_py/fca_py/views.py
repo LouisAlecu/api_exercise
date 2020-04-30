@@ -10,15 +10,26 @@ authenticate = Authenticator()
 @data_blueprint.route("/books", methods=["GET"], endpoint="books")
 @authenticate.login_user
 def books():
-    title = request.args.get("title")
-    author = request.args.get("authors")
+    # title = request.args.get("title")
+    # authors = request.args.get("authors")
+    json_data = request.get_json()
+    author = json_data.get("author")
+    title = json_data.get("title")
     user_credentials = authenticate.get_user_credentials()
     if user_credentials["user_type"] == "Not authenticated":
         return jsonify({"error": "Unauthorized access."})
-    if not title or not author:
-        return f"You should send an object with title as a string and authors as a list of strings."
+    if not title and not author:
+        return jsonify(
+            {
+                "error": f"""
+                        You should send an object with either a title,
+                        an author, or both. If both it will be interpreted 
+                        that the title is meant to be written by that author.
+                    """
+            }
+        )
 
-    book = (
+    book_records = (
         db.session.query(
             ReportingCube.title,
             ReportingCube.author,
@@ -28,13 +39,44 @@ def books():
             ReportingCube.isbn,
             ReportingCube.is_available,
         )
-        .filter(ReportingCube.title == title)
-        .filter(ReportingCube.author == author)
+        .filter(ReportingCube.title == title if title else True)
+        .filter(ReportingCube.author == author if author else True)
         .filter(ReportingCube.is_historical_data == False)
         .all()
     )
-    print(book)
-    return jsonify({"hello": book})
+    print("book record is: ", book_records)
+
+    # book_authors = [
+    #     db.session.query(ReportingCube.author)
+    #     .filter(ReportingCube.title == row[0])
+    #     .filter(ReportingCube.is_historical_data == False)
+    #     .all()
+    #     for row in book_records
+    # ]
+    book_authors = []
+    for row in book_records:
+        book_authors_row = (
+            db.session.query(ReportingCube.author)
+            .filter(ReportingCube.title == row[0])
+            .filter(ReportingCube.is_historical_data == False)
+            .all()
+        )
+        book_authors_row = [row[0] for row in book_authors_row]
+        book_authors.append(book_authors_row)
+    print(book_authors)
+    print("book_authors")
+    # return_data = {
+    #     "title": book_records[0][0],
+    #     "authors": [row[1] for row in book_records],
+    #     "language": book_records[0][2],
+    #     "publication_year": book_records[0][3],
+    #     "ext_id": book_records[0][4],
+    #     "isbn": book_records[0][5],
+    #     "is_available": book_records[0][6],
+    # }
+    # print("book is: ", return_data)
+    # print("book_records is: ", book_records)
+    return jsonify({"data": book_records})
 
 
 @data_blueprint.route("/books/rental_status", methods=["PUT"], endpoint="rental_status")
@@ -43,7 +85,7 @@ def rental_status():
     title = request.args.get("title")
     author = request.args.get("authors")
     user_credentials = authenticate.get_user_credentials()
-    if user_credentials["user_type"] == "Not authenticated":
+    if user_credentials["user_type"] in ("user", "Not authenticated"):
         return jsonify({"error": "Unauthorized access."})
 
     if request.args.get("rental_status") == "Available":
@@ -104,11 +146,14 @@ def rental_status():
     return jsonify({"Updated": True})
 
 
-# @data_blueprint.route("/books", methods=["GET"], endpoint="books")
-# def books():
+# @data_blueprint.route("/wishlists", methods=["GET"], endpoint="wishlists")
+# @authenticate.login_user
+# def wishlists():
 #     title = request.args.get("title")
 #     author = request.args.get("authors")
-
+#     user_credentials = authenticate.get_user_credentials()
+#     if user_credentials["user_type"] == "Not authenticated":
+#         return jsonify({"error": "Unauthorized access."})
 #     if not title or not author:
 #         return f"You should send an object with title as a string and authors as a list of strings."
 
@@ -124,6 +169,7 @@ def rental_status():
 #         )
 #         .filter(ReportingCube.title == title)
 #         .filter(ReportingCube.author == author)
+#         .filter(ReportingCube.is_historical_data == False)
 #         .all()
 #     )
 #     print(book)

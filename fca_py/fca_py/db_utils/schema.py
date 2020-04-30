@@ -62,12 +62,42 @@ class BookAuthor(db.Model):
     author = db.Column(db.String, db.ForeignKey("authors.author"))
 
 
-# class User(db.Model):
-#     __tablename__ = "users"
-#     id = db.Column(db.Integer, primary_key=True)
-#     first_name = db.Column(db.String)
-#     last_name = db.Column(db.String)
-#     is_staff = db.Column(db.Boolean))
+class User(db.Model):
+    __tablename__ = "users"
+    id = db.Column(db.Integer, primary_key=True)
+    first_name = db.Column(db.String)
+    last_name = db.Column(db.String)
+    user_type = db.Column(db.String)
+    db.CheckConstraint("user_type in ('staff', 'user')", name="user_type_values")
+
+
+class UserWishlist(db.Model):
+    __tablename__ = "user_wishlist"
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey("users.id"))
+    first_name = db.Column(db.String)
+    last_name = db.Column(db.String)
+    book_id = db.Column(db.Integer, db.ForeignKey("reporting_cube.book_id"))
+    title = db.Column(db.String, db.ForeignKey("reporting_cube.title"))
+    # is_available = db.Column(db.Boolean, db.ForeignKey("reporting_cube.is_available"))
+    # is_historical_data = db.Column(
+    #     db.Boolean, db.ForeignKey("reporting_cube.is_historical_data")
+    # )
+    # we need the constraint below because in the reporting cube we got the is_available
+    # field and because we have the historical data in there, so we want the most
+    # updated record from the cube
+    # __table_args__ = (
+    #     db.ForeignKeyConstraint(
+    #         [book_id, title, is_available, is_historical_data],
+    #         [
+    #             ReportingCube.id,
+    #             ReportingCube.title,
+    #             ReportingCube.is_available,
+    #             ReportingCube.is_historical_data,
+    #         ],
+    #     ),
+    #     {},
+    # )
 
 
 def initialize_db(db, data_path):
@@ -162,4 +192,23 @@ def initialize_db(db, data_path):
     ]
     db.session.query(ReportingCube).delete()
     db.session.bulk_insert_mappings(ReportingCube, reporting_cube_records)
+    db.session.commit()
+
+    # Now let's add some users
+    db.session.query(User).delete()
+    db.session.add(
+        User(first_name="user_1_fn", last_name="user_1_ln", user_type="user")
+    )
+    db.session.add(
+        User(first_name="user_2_fn", last_name="user_2_ln", user_type="user")
+    )
+    db.session.add(
+        User(first_name="user_3_fn", last_name="user_3_ln", user_type="user")
+    )
+    db.session.add(
+        User(first_name="staff_1_fn", last_name="staff_1_ln", user_type="staff")
+    )
+    db.session.add(
+        User(first_name="staff_2_fn", last_name="staff_2_ln", user_type="staff")
+    )
     db.session.commit()
